@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>信息课堂积分PK榜</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+            background-color: #f9f0ff;
+            margin: 0;
+            padding: 20px;
+            color: #5a3d7a;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #8e44ad;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .section {
+            background-color: #f3e5ff;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.05);
+        }
+        
+        .section-title {
+            font-size: 1.5em;
+            color: #6c3483;
+            margin-top: 0;
+            margin-bottom: 15px;
+            border-bottom: 2px dashed #d2b4de;
+            padding-bottom: 8px;
+        }
+        
+        .random-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .speed-control {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .speed-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #6c3483;
+        }
+        
+        .speed-slider {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 10px;
+            border-radius: 5px;
+            background: #d2b4de;
+            outline: none;
+        }
+        
+        .speed-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #8e44ad;
+            cursor: pointer;
+        }
+        
+        .count-selector {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .count-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #6c3483;
+        }
+        
+        .count-input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 10px;
+            border: 2px solid #d2b4de;
+            font-size: 16px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        }
+        
+        .btn-primary {
+            background-color: #9b59b6;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #8e44ad;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background-color: #d2b4de;
+            color: #5a3d7a;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #bb8fce;
+            transform: translateY(-2px);
+        }
+        
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+            transform: translateY(-2px);
+        }
+        
+        .result-display {
+            margin-top: 20px;
+            min-height: 60px;
+            background-color: white;
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            border: 2px dashed #d2b4de;
+        }
+        
+        .selected-student {
+            background-color: #8e44ad;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 50px;
+            font-weight: bold;
+            animation: pop 0.5s;
+        }
+        
+        @keyframes pop {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .students-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .student-card {
+            background-color: white;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s;
+            border: 2px solid #e8d5f7;
+        }
+        
+        .student-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            border-color: #9b59b6;
+        }
+        
+        .student-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #6c3483;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .student-score {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #8e44ad;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .student-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        
+        .btn-score {
+            flex: 1;
+            padding: 8px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-add {
+            background-color: #a3e4d7;
+            color: #1d6b5a;
+            border: 2px solid #76d7c4;
+        }
+        
+        .btn-add:hover {
+            background-color: #76d7c4;
+        }
+        
+        .btn-subtract {
+            background-color: #f5b7b1;
+            color: #943126;
+            border: 2px solid #e74c3c;
+        }
+        
+        .btn-subtract:hover {
+            background-color: #f1948a;
+        }
+        
+        .import-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .file-label {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #d2b4de;
+            color: #5a3d7a;
+            border-radius: 50px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .file-label:hover {
+            background-color: #bb8fce;
+            transform: translateY(-2px);
+        }
+        
+        .sort-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .highlight {
+            animation: highlight 1s;
+        }
+        
+        @keyframes highlight {
+            0% { background-color: #f9e79f; }
+            100% { background-color: white; }
+        }
+        
+        @media (max-width: 768px) {
+            .students-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+            
+            .random-selector {
+                flex-direction: column;
+            }
+            
+            .speed-control, .count-selector {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✨ 信息课堂积分PK榜 ✨</h1>
+        
+        <div class="section">
+            <h2 class="section-title">🎲 随机点名</h2>
+            <div class="random-selector">
+                <div class="speed-control">
+                    <label class="speed-label">点名速度:</label>
+                    <input type="range" min="50" max="500" value="200" class="speed-slider" id="speedSlider">
+                </div>
+                <div class="count-selector">
+                    <label class="count-label">抽取人数:</label>
+                    <input type="number" min="1" max="20" value="1" class="count-input" id="countInput">
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-primary" id="startBtn">开始点名</button>
+                <button class="btn btn-secondary" id="stopBtn" disabled>停止</button>
+                <button class="btn btn-danger" id="resetBtn">重置名单</button>
+            </div>
+            <div class="result-display" id="resultDisplay"></div>
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title">📊 学生积分榜</h2>
+            <div class="sort-buttons">
+                <button class="btn btn-secondary" id="sortDescBtn">按积分降序</button>
+                <button class="btn btn-secondary" id="sortAscBtn">按积分升序</button>
+                <button class="btn btn-secondary" id="sortNameBtn">按姓名排序</button>
+            </div>
+            <div class="students-grid" id="studentsGrid"></div>
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title">📁 导入学生名单</h2>
+            <div class="import-section">
+                <p>请上传Excel文件（第一列应为学生姓名）:</p>
+                <input type="file" id="fileInput" class="file-input" accept=".xlsx, .xls">
+                <label for="fileInput" class="file-label">选择Excel文件</label>
+                <button class="btn btn-primary" id="importBtn">导入名单</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始学生数据
+        let students = [
+            { name: "张三", score: 0 },
+            { name: "李四", score: 0 },
+            { name: "王五", score: 0 },
+            { name: "赵六", score: 0 },
+            { name: "钱七", score: 0 },
+            { name: "孙八", score: 0 },
+            { name: "周九", score: 0 },
+            { name: "吴十", score: 0 },
+            { name: "郑十一", score: 0 },
+            { name: "王十二", score: 0 },
+            { name: "冯十三", score: 0 },
+            { name: "陈十四", score: 0 },
+            { name: "褚十五", score: 0 },
+            { name: "卫十六", score: 0 },
+            { name: "蒋十七", score: 0 },
+            { name: "沈十八", score: 0 },
+            { name: "韩十九", score: 0 },
+            { name: "杨二十", score: 0 }
+        ];
+        
+        // DOM元素
+        const studentsGrid = document.getElementById('studentsGrid');
+        const resultDisplay = document.getElementById('resultDisplay');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const speedSlider = document.getElementById('speedSlider');
+        const countInput = document.getElementById('countInput');
+        const sortDescBtn = document.getElementById('sortDescBtn');
+        const sortAscBtn = document.getElementById('sortAscBtn');
+        const sortNameBtn = document.getElementById('sortNameBtn');
+        const fileInput = document.getElementById('fileInput');
+        const importBtn = document.getElementById('importBtn');
+        
+        // 随机点名变量
+        let isSelecting = false;
+        let selectionInterval;
+        let availableStudents = [...students];
+        
+        // 渲染学生卡片
+        function renderStudents() {
+            studentsGrid.innerHTML = '';
+            
+            students.forEach((student, index) => {
+                const card = document.createElement('div');
+                card.className = 'student-card';
+                card.id = `student-${index}`;
+                
+                card.innerHTML = `
+                    <div class="student-name">${student.name}</div>
+                    <div class="student-score">${student.score} 分</div>
+                    <div class="student-actions">
+                        <button class="btn-score btn-add" data-index="${index}" data-action="add">+1</button>
+                        <button class="btn-score btn-add" data-index="${index}" data-action="add5">+5</button>
+                        <button class="btn-score btn-subtract" data-index="${index}" data-action="subtract">-1</button>
+                        <button class="btn-score btn-subtract" data-index="${index}" data-action="subtract5">-5</button>
+                    </div>
+                `;
+                
+                studentsGrid.appendChild(card);
+            });
+        }
+        
+        // 更新学生分数
+        function updateScore(index, action) {
+            let change = 0;
+            
+            switch(action) {
+                case 'add':
+                    change = 1;
+                    break;
+                case 'add5':
+                    change = 5;
+                    break;
+                case 'subtract':
+                    change = -1;
+                    break;
+                case 'subtract5':
+                    change = -5;
+                    break;
+            }
+            
+            students[index].score += change;
+            
+            // 确保分数不为负
+            if (students[index].score < 0) {
+                students[index].score = 0;
+            }
+            
+            // 更新显示
+            const scoreElement = document.querySelector(`#student-${index} .student-score`);
+            scoreElement.textContent = `${students[index].score} 分`;
+            
+            // 添加高亮效果
+            const card = document.getElementById(`student-${index}`);
+            card.classList.add('highlight');
+            setTimeout(() => {
+                card.classList.remove('highlight');
+            }, 1000);
+        }
+        
+        // 随机选择学生
+        function randomSelect() {
+            if (availableStudents.length === 0) {
+                availableStudents = [...students];
+            }
+            
+            const count = Math.min(parseInt(countInput.value), availableStudents.length);
+            const selected = [];
+            
+            for (let i = 0; i < count; i++) {
+                const randomIndex = Math.floor(Math.random() * availableStudents.length);
+                selected.push(availableStudents[randomIndex].name);
+                availableStudents.splice(randomIndex, 1);
+            }
+            
+            resultDisplay.innerHTML = selected.map(name => 
+                `<span class="selected-student">${name}</span>`
+            ).join('');
+        }
+        
+        // 开始随机点名
+        function startSelection() {
+            if (isSelecting) return;
+            
+            isSelecting = true;
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            
+            const speed = parseInt(speedSlider.value);
+            randomSelect();
+            
+            selectionInterval = setInterval(randomSelect, speed);
+        }
+        
+        // 停止随机点名
+        function stopSelection() {
+            if (!isSelecting) return;
+            
+            clearInterval(selectionInterval);
+            isSelecting = false;
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+        }
+        
+        // 重置可用学生名单
+        function resetAvailableStudents() {
+            availableStudents = [...students];
+            resultDisplay.innerHTML = '<span style="color:#888;">点击"开始点名"按钮开始随机选择</span>';
+        }
+        
+        // 排序函数
+        function sortStudents(order) {
+            if (order === 'desc') {
+                students.sort((a, b) => b.score - a.score);
+            } else if (order === 'asc') {
+                students.sort((a, b) => a.score - b.score);
+            } else if (order === 'name') {
+                students.sort((a, b) => a.name.localeCompare(b.name));
+            }
+            
+            renderStudents();
+        }
+        
+        // 导入Excel文件
+        function importExcel() {
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('请先选择Excel文件');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                
+                // 获取第一个工作表
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                
+                // 将工作表转换为JSON
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                
+                // 提取第一列作为学生姓名
+                const names = [];
+                jsonData.forEach(row => {
+                    if (row[0] && typeof row[0] === 'string') {
+                        names.push(row[0].trim());
+                    }
+                });
+                
+                if (names.length === 0) {
+                    alert('未找到学生姓名，请确保Excel文件第一列包含学生姓名');
+                    return;
+                }
+                
+                // 更新学生列表
+                students = names.map(name => ({ name, score: 0 }));
+                availableStudents = [...students];
+                
+                // 重新渲染
+                renderStudents();
+                resetAvailableStudents();
+                
+                alert(`成功导入 ${names.length} 名学生`);
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+        
+        // 事件监听
+        studentsGrid.addEventListener('click', (e) => {
+            if (e.target.classList.contains('btn-score')) {
+                const index = parseInt(e.target.getAttribute('data-index'));
+                const action = e.target.getAttribute('data-action');
+                updateScore(index, action);
+            }
+        });
+        
+        startBtn.addEventListener('click', startSelection);
+        stopBtn.addEventListener('click', stopSelection);
+        resetBtn.addEventListener('click', resetAvailableStudents);
+        
+        sortDescBtn.addEventListener('click', () => sortStudents('desc'));
+        sortAscBtn.addEventListener('click', () => sortStudents('asc'));
+        sortNameBtn.addEventListener('click', () => sortStudents('name'));
+        
+        importBtn.addEventListener('click', importExcel);
+        
+        // 初始化
+        renderStudents();
+        resetAvailableStudents();
+    </script>
+</body>
+</html>
